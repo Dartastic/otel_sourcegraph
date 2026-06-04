@@ -2,7 +2,6 @@
 // Copyright 2025-2026 Mindful Software LLC d/b/a Dartastic.io, All rights reserved.
 
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
-import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'otel_sourcegraph_suppression.dart';
 
@@ -52,54 +51,70 @@ Future<T> tracedSourcegraph<T>({
   final t = tracer ?? OTel.tracerProvider().getTracer('otel_sourcegraph');
   final span = t.startSpan('sourcegraph $operation', kind: SpanKind.client);
   try {
-    span.setStringAttribute('rpc.system', 'sourcegraph');
+    span.addAttributes(
+        OTel.attributes([OTel.attributeString('rpc.system', 'sourcegraph')]));
     final r = await invoke();
     final res = r.result;
     if (res != null) {
       if (res.instance != null) {
-        span.setStringAttribute('sourcegraph.instance', res.instance!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('sourcegraph.instance', res.instance!)]));
       }
       if (res.repo != null) {
-        span.setStringAttribute('sourcegraph.repo', res.repo!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('sourcegraph.repo', res.repo!)]));
       }
       if (res.revision != null) {
-        span.setStringAttribute('vcs.ref.head.revision', res.revision!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('vcs.ref.head.revision', res.revision!)]));
       }
       if (res.queryText != null) {
-        span.setStringAttribute('sourcegraph.search.query', res.queryText!);
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString('sourcegraph.search.query', res.queryText!)
+        ]));
       }
       if (res.resultsCount != null) {
-        span.setIntAttribute('sourcegraph.results.count', res.resultsCount!);
+        span.addAttributes(OTel.attributes([
+          OTel.attributeInt('sourcegraph.results.count', res.resultsCount!)
+        ]));
       }
       if (res.codyModel != null) {
-        span.setStringAttribute('gen_ai.request.model', res.codyModel!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('gen_ai.request.model', res.codyModel!)]));
       }
       if (res.codyPromptTokens != null) {
-        span.setIntAttribute(
-          'gen_ai.usage.prompt_tokens',
-          res.codyPromptTokens!,
-        );
+        span.addAttributes(OTel.attributes([
+          OTel.attributeInt(
+            'gen_ai.usage.prompt_tokens',
+            res.codyPromptTokens!,
+          )
+        ]));
       }
       if (res.codyCompletionTokens != null) {
-        span.setIntAttribute(
-          'gen_ai.usage.completion_tokens',
-          res.codyCompletionTokens!,
-        );
+        span.addAttributes(OTel.attributes([
+          OTel.attributeInt(
+            'gen_ai.usage.completion_tokens',
+            res.codyCompletionTokens!,
+          )
+        ]));
       }
       if (res.statusCode != null) {
-        span.setIntAttribute('http.response.status_code', res.statusCode!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeInt('http.response.status_code', res.statusCode!)]));
       }
       if (res.errorCode != null) {
-        span.setStringAttribute('sourcegraph.error.code', res.errorCode!);
+        span.addAttributes(OTel.attributes(
+            [OTel.attributeString('sourcegraph.error.code', res.errorCode!)]));
       }
-      final fail =
-          res.errorCode != null ||
+      final fail = res.errorCode != null ||
           (res.statusCode != null && res.statusCode! >= 400);
       if (fail) {
-        span.setStringAttribute(
-          ErrorResource.errorType.key,
-          res.errorCode ?? 'sourcegraph.error',
-        );
+        span.addAttributes(OTel.attributes([
+          OTel.attributeString(
+            ErrorResource.errorType.key,
+            res.errorCode ?? 'sourcegraph.error',
+          )
+        ]));
         span.setStatus(SpanStatusCode.Error, res.errorMessage);
       }
     }
